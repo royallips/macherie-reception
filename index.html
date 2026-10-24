@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Macherie</title>
+<style>
+  :root{
+    --wine:#C23A72;--wine-dark:#8E2552;--gold:#E58AAE;--gold-soft:#F2C4D8;
+    --cream:#FFF5F9;--ink:#3A1E2C;--line:#F0D8E3;--gray:#A98B98;--danger:#C0205A;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+    background:var(--cream);color:var(--ink);overflow:hidden;}
+  button{font-family:inherit;cursor:pointer;border:none;}
+
+  header{height:58px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 16px;background:var(--wine);color:#fff;position:relative;z-index:30;}
+  .brand{display:flex;align-items:baseline;gap:9px;}
+  .logoImg{height:42px;display:block;}
+  .modeToggle{display:flex;background:rgba(0,0,0,.22);border-radius:999px;padding:4px;}
+  .modeToggle button{background:transparent;color:rgba(255,255,255,.65);
+    padding:6px 10px;border-radius:999px;font-size:11px;font-weight:700;transition:.15s;}
+  .modeToggle button.active{background:#fff;color:var(--wine);}
+  .fsBtn{background:rgba(0,0,0,.22);color:#fff;width:34px;height:34px;border-radius:50%;
+    font-size:17px;line-height:1;margin-left:8px;flex-shrink:0;}
+  .headRight{display:flex;align-items:center;}
+
+  main{height:calc(100% - 58px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+  /* お客様用 */
+  .custBar{display:flex;align-items:center;gap:10px;padding:12px 18px 0;}
+  .resetBtn{background:#fff;border:1px solid var(--line);color:var(--wine);font-weight:700;
+    font-size:14px;border-radius:10px;padding:9px 16px;}
+  .returnZone{margin-left:auto;display:flex;align-items:center;gap:7px;border:2px dashed #D7C7BD;
+    color:var(--gray);font-weight:700;font-size:14px;border-radius:12px;padding:9px 18px;transition:.15s;}
+  .returnZone .ic{font-size:16px;}
+  .returnZone.armed{border-color:var(--gold);color:var(--wine);}
+  .returnZone.over{background:var(--wine);border-color:var(--wine);color:#fff;transform:scale(1.05);}
+
+  .grid{display:grid;gap:14px;padding:14px 18px 18px;grid-template-columns:repeat(3,1fr);}
+  .card{position:relative;aspect-ratio:595/842;width:100%;border-radius:16px;overflow:hidden;background:#ddd;
+    box-shadow:0 4px 14px rgba(58,15,30,.10);transition:transform .12s;border:1px solid rgba(0,0,0,.04);}
+  .card:active{transform:scale(.97);}
+  .card .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .card .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:64px;font-weight:700;color:rgba(255,255,255,.9);}
+  .card .scrim{position:absolute;left:0;right:0;bottom:0;height:42%;
+    background:linear-gradient(to top,rgba(20,5,12,.78),transparent);}
+  .card .name{position:absolute;left:0;right:0;bottom:0;padding:14px 16px;color:#fff;
+    font-size:23px;font-weight:700;letter-spacing:.03em;text-shadow:0 1px 4px rgba(0,0,0,.5);}
+
+  /* トップ：スライドショー（クロスディゾルブ） */
+  .topShow{position:relative;width:100%;height:100%;overflow:hidden;background:#000;}
+  .topImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+    opacity:0;transition:opacity 4s ease-in-out;}
+  .topImg.show{opacity:1;}
+  .topShow{touch-action:pan-y;user-select:none;-webkit-user-select:none;}
+  .topShow.quick .topImg{transition-duration:.6s;}
+  .topImg{-webkit-user-drag:none;pointer-events:none;}
+
+  /* 表示：本日出勤 */
+  .card .cname{position:absolute;left:0;right:0;bottom:0;padding:6px 12px 8px;color:#fff;
+    font-size:18px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.5);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .card .ctime{display:block;font-size:11px;font-weight:500;letter-spacing:.02em;
+    color:rgba(255,255,255,.75);margin-top:1px;white-space:normal;}
+  .card .soldBtn{top:6px;right:6px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;z-index:2;
+    background:rgba(0,0,0,.18);color:rgba(255,255,255,.55);}
+  .card .soldBtn.active{background:rgba(176,48,80,.55);color:rgba(255,255,255,.8);}
+  .card .soldMark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:30px;font-weight:900;letter-spacing:.2em;text-shadow:0 2px 8px rgba(0,0,0,.6);}
+
+  /* スタッフ用：4列の選択グリッド */
+  .pickWrap{padding:12px 12px 84px;}
+  .pickGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .pcard{position:relative;aspect-ratio:595/842;width:100%;border-radius:11px;overflow:hidden;background:#ddd;
+    border:2px solid transparent;transition:transform .1s;}
+  .pcard:active{transform:scale(.96);}
+  .pcard .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .pcard .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:34px;font-weight:700;color:rgba(255,255,255,.92);}
+  .pcard .scrim{position:absolute;left:0;right:0;bottom:0;height:46%;
+    background:linear-gradient(to top,rgba(20,5,12,.8),transparent);}
+  .pcard .pname{position:absolute;left:0;right:0;bottom:0;padding:4px 8px 5px;color:#fff;
+    font-size:14px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.5);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pcard .ptime{display:block;font-size:10px;font-weight:600;opacity:.9;margin-top:1px;letter-spacing:.2px;}
+  .pcard.selected{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.5);}
+  .pcard .check{position:absolute;top:6px;left:6px;width:26px;height:26px;border-radius:50%;
+    background:var(--gold);color:#3A0F1E;font-size:15px;font-weight:800;display:none;
+    align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+  .pcard.selected .check{display:flex;}
+  .doneTag{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:#1F8A5B;color:#fff;font-size:19px;font-weight:800;
+    border-radius:10px;padding:6px 18px;box-shadow:0 2px 8px rgba(0,0,0,.35);}
+  .pcard.added{border-color:#1F8A5B;}
+  .soldBtn{position:absolute;top:6px;right:6px;font-size:11px;font-weight:800;border-radius:7px;
+    padding:4px 8px;background:rgba(255,255,255,.85);color:var(--danger);}
+  .soldBtn.active{background:var(--danger);color:#fff;}
+  .pcard.sold{opacity:.42;}
+  .pcard.sold .pname{text-decoration:line-through;}
+
+  .doneBar{position:fixed;left:0;right:0;bottom:0;height:68px;background:#fff;border-top:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;padding:0 18px;z-index:25;
+    box-shadow:0 -4px 16px rgba(58,15,30,.08);}
+  .doneBar .cnt{font-size:15px;font-weight:700;color:var(--wine);}
+  .doneBar .cnt b{font-size:20px;}
+  .doneBar .done{background:var(--wine);color:#fff;border-radius:12px;padding:13px 30px;font-size:16px;font-weight:800;}
+  .doneBar .done:disabled{background:#D9CEC8;color:#fff;}
+
+  .chBar{display:flex;justify-content:flex-end;padding:10px 14px 0;}
+  .chBar .chBtn{background:#fff;color:var(--wine);border:1.5px solid var(--wine);border-radius:10px;
+    padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;}
+  .chBar .chBtn.active{background:var(--wine);color:#fff;}
+  .chBar .chBtn:disabled{opacity:.5;}
+  .inbBadge{position:absolute;top:5px;right:5px;background:var(--gold);color:#fff;
+    font-size:9px;font-weight:800;border-radius:5px;padding:2px 5px;line-height:1.2;}
+  .checkRow{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .checkRow label{font-size:13px;color:var(--gray);font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer;}
+  .checkRow input[type=checkbox]{width:20px;height:20px;accent-color:var(--wine);cursor:pointer;}
+  .inbToggle{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .inbToggle label{font-size:13px;color:var(--gray);font-weight:600;}
+  .inbToggle button{padding:8px 18px;border-radius:10px;font-size:13px;font-weight:700;
+    border:1.5px solid var(--wine);background:#fff;color:var(--wine);}
+  .inbToggle button.on{background:var(--wine);color:#fff;}
+
+  /* 設定：6列グリッド */
+  .setWrap{padding:16px 18px 40px;}
+  .setHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .setHead h2{font-size:17px;color:var(--wine);margin:0;}
+  .setSubHead{display:flex;gap:6px;margin-bottom:14px;}
+  .btn{background:var(--wine);color:#fff;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;}
+  .btn.ghost{background:#fff;color:var(--wine);border:1px solid var(--line);}
+  .btn.sm{font-size:12px;padding:7px 11px;}
+
+  .setGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+  .scard{cursor:pointer;min-width:0;}
+  .sthumb{position:relative;aspect-ratio:595/842;width:100%;border-radius:10px;overflow:hidden;background:#ddd;border:1px solid rgba(0,0,0,.04);}
+  .sthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .sthumb .ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;font-weight:700;}
+  .sthumb .soldtag{position:absolute;top:5px;left:5px;background:var(--danger);color:#fff;
+    font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px;}
+  .sname{margin-top:6px;font-size:13px;font-weight:700;text-align:center;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .photoSwitch{display:flex;gap:3px;margin-top:4px;}
+  .photoSwitch button{flex:1;padding:3px 0;border:1px solid var(--line);border-radius:5px;
+    font-size:11px;font-weight:700;background:#fff;color:var(--gray);}
+  .photoSwitch button.active{background:var(--wine);color:#fff;border-color:var(--wine);}
+  .empty{color:var(--gray);font-size:14px;padding:14px 2px;}
+
+  /* 全画面ビューア */
+  .viewer{position:fixed;inset:0;z-index:70;background:#0E1F18;display:none;align-items:center;justify-content:center;touch-action:none;}
+  .viewer.show{display:flex;}
+  .viewer img{width:100%;height:100%;object-fit:contain;}
+  #viewerBody{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity .15s;}
+  #viewerBody.fade{opacity:0;}
+  .viewer .vph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;}
+  .viewer .vph .big{font-size:120px;font-weight:800;}
+  .viewer .vname{position:absolute;bottom:36px;left:0;right:0;text-align:center;color:#fff;
+    font-size:30px;font-weight:700;text-shadow:0 2px 10px rgba(0,0,0,.6);letter-spacing:.04em;}
+  .viewer .close{position:absolute;top:16px;right:16px;width:46px;height:46px;border-radius:50%;
+    background:rgba(255,255,255,.15);color:#fff;font-size:22px;z-index:1;}
+  .vSwitch{position:absolute;bottom:16px;right:14px;display:none;gap:5px;z-index:1;}
+  .vSwitch button{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.18);
+    color:#fff;font-size:11px;font-weight:800;border:1.5px solid rgba(255,255,255,.35);}
+  .vSwitch button.active{background:rgba(255,255,255,.82);color:var(--wine);border-color:#fff;}
+
+  /* トースト通知 */
+  #syncToast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:rgba(30,30,30,.92);color:#fff;font-size:13px;padding:8px 18px;border-radius:20px;
+    opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:300;white-space:nowrap;}
+  #syncToast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ロック画面 */
+  #lockScreen{position:fixed;inset:0;z-index:200;background:var(--wine);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px;}
+  #lockScreen.hidden{display:none;}
+  #lockScreen .lockLogo{height:72px;}
+  #lockScreen .lockTitle{color:rgba(255,255,255,.55);font-size:13px;font-weight:600;letter-spacing:.08em;margin-top:-8px;}
+  #lockScreen .lockBox{background:rgba(255,255,255,.08);border-radius:18px;padding:28px 28px 24px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px;}
+  #lockScreen .lockBox p{color:#fff;font-size:15px;font-weight:700;text-align:center;margin:0;}
+  #lockScreen input[type=password]{width:100%;padding:13px 16px;border-radius:12px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-size:18px;text-align:center;letter-spacing:.2em;font-family:inherit;}
+  #lockScreen input[type=password]::placeholder{letter-spacing:normal;font-size:14px;opacity:.5;}
+  #lockScreen input[type=password]:focus{outline:none;border-color:var(--gold);}
+  #lockScreen .lockBtn{width:100%;padding:14px;border-radius:12px;background:var(--gold);color:#fff;font-size:16px;font-weight:800;letter-spacing:.04em;}
+  #lockScreen .lockErr{color:#f87171;font-size:13px;text-align:center;min-height:18px;}
+
+  /* モーダル */
+  .modal{position:fixed;inset:0;z-index:60;background:rgba(20,8,14,.55);display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal.show{display:flex;}
+  .sheet{background:#fff;border-radius:18px;width:100%;max-width:440px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .sheet h3{margin:0 0 16px;font-size:18px;color:var(--wine);}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:13px;font-weight:700;color:var(--gray);margin-bottom:6px;}
+  .field input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;}
+  .field input:focus{outline:none;border-color:var(--wine);}
+  .sheetActs{display:flex;gap:10px;margin-top:8px;}
+  .sheetActs button{flex:1;padding:12px;border-radius:10px;font-size:15px;font-weight:700;}
+  .sheetActs .cancel{background:#F1ECE7;color:var(--ink);}
+  .sheetActs .save{background:var(--wine);color:#fff;}
+  .sheetActs .del{background:#fff;border:1px solid #EBB7C5;color:var(--danger);flex:0 0 auto;padding:12px 16px;}
+</style>
+</head>
+<body>
+
+<div id="lockScreen">
+  <img class="lockLogo" id="lockLogoImg" src="" alt="" style="display:none">
+  <p class="lockTitle"></p>
+  <div class="lockBox">
+    <p>パスワードを入力してください</p>
+    <input type="password" id="lockInput" placeholder="パスワード" autocomplete="off" onkeydown="if(event.key==='Enter')tryUnlock()">
+    <button class="lockBtn" onclick="tryUnlock()">解除</button>
+    <div class="lockErr" id="lockErr"></div>
+  </div>
+</div>
+
+<header>
+  <div class="brand"><!-- ロゴは後で設定 -->
+  </div>
+  <div class="headRight">
+  <div class="modeToggle">
+    <button id="mTop" onclick="setMode('top')">トップ</button>
+    <button id="mCustomer" class="active" onclick="setMode('customer')">表示</button>
+    <button id="mInbound" onclick="setMode('inbound')">インバウンド</button>
+    <button id="mSettings" onclick="setMode('settings')">一覧</button>
+  </div>
+  <button class="fsBtn" id="fsBtn" onclick="toggleFullscreen()" title="全画面表示">⛶</button>
+  </div>
+</header>
+
+<main id="main"></main>
+<div id="syncToast"></div>
+<div class="viewer" id="viewer"
+  onpointerdown="viewerPD(event)" onpointerup="viewerPU(event)" onpointercancel="vs=null">
+  <button class="close" onclick="closeViewer(event)">✕</button>
+  <div id="viewerBody"></div>
+  <div id="vSwitch" class="vSwitch"></div>
+</div>
+
+<div class="modal" id="editModal">
+  <div class="sheet">
+    <h3 id="editTitle">キャストを追加</h3>
+    <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:14px;">
+      <div id="editPhotoWrap" style="width:90px;flex-shrink:0;aspect-ratio:595/842;border-radius:10px;overflow:hidden;background:#ddd;display:none;cursor:pointer;"
+        onclick="openPhotoViewer()">
+        <img id="editPhoto" src="" alt="" style="width:100%;height:100%;object-fit:cover;"
+          onerror="this.parentNode.style.display='none'">
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div class="field"><label>源氏名</label>
+          <input id="fName" type="text" placeholder="" autocomplete="off" oninput="updateEditPhoto()">
+          <div id="nameErr" style="display:none;color:var(--danger);font-size:12px;margin-top:5px;">源氏名を入力してください</div></div>
+      </div>
+    </div>
+    <div class="checkRow">
+      <label><input type="checkbox" id="fMatt" onchange="toggleFMatt()">マット対応</label>
+    </div>
+    <div class="field" id="mattMemoWrap" style="display:none">
+      <label>対応条件</label>
+      <input type="text" id="fMattMemo" placeholder="条件を入力（任意）" maxlength="30">
+    </div>
+    <div class="inbToggle">
+      <label>インバウンド対応</label>
+      <span id="fInbInfo" style="font-size:13px;color:var(--gray);">利用表アプリのキャスト編集で設定します</span>
+    </div>
+    <div class="sheetActs">
+      <button class="del" id="editDel" onclick="deleteCast()">削除</button>
+      <button class="cancel" onclick="closeEdit()">やめる</button>
+      <button class="save" onclick="saveCast()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="confirmModal">
+  <div class="sheet">
+    <h3>本当に削除しますか？</h3>
+    <p id="confirmName" style="margin:0 0 18px;font-size:15px;line-height:1.6;color:var(--ink);"></p>
+    <div class="sheetActs">
+      <button class="cancel" onclick="closeConfirm()">やめる</button>
+      <button class="save" style="background:var(--danger)" onclick="reallyDelete()">完全削除</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+let casts = [];          // {id,name,photo,sold}
+let mode = 'customer';
+let editId = null;
+let attendMap = new Map();   // attend.json の本日出勤 源氏名 → {start,end,shiftTime}
+let viewMode = 'today';      // 表示タブ: 'today' | 'matt'
+const STORE_KEY = 'royal_reception_v2';
+const SOLD_DATE_KEY = 'royal_reception_sold_date';
+const DELETED_KEY = 'royal_reception_deleted';
+const DAY_KEY = 'royal_reception_day';  // その日だけ有効な状態（自動完売済み）
+function loadDay(){
+  try{ const v=JSON.parse(localStorage.getItem(DAY_KEY)||'null'); if(v&&v.date===todayJST()) return v; }catch(e){}
+  return {date:todayJST(),autoSold:[],extraSold:[]};
+}
+function saveDay(){ try{ localStorage.setItem(DAY_KEY,JSON.stringify(day)); }catch(e){} }
+let day;
+function getDeletedIds(){ try{ return new Set(JSON.parse(localStorage.getItem(DELETED_KEY)||'[]')); }catch(e){ return new Set(); } }
+function addDeletedId(id){ const s=getDeletedIds(); s.add(id); localStorage.setItem(DELETED_KEY,JSON.stringify([...s])); }
+const PHOTO_BASE = './img/';   // ページと同じ場所の img フォルダ（ローカル確認でも新しい写真が出る）
+// 写真は img/源氏名.jpg（2枚目 源氏名2、3枚目 源氏名3、インバウンド 源氏名A1 / 源氏名A2）
+function photoUrl(name,suffix){ return name?PHOTO_BASE+encodeURIComponent(name.normalize('NFC'))+(suffix||'')+'.jpg':''; }
+// 写真がないキャストは「COMING SOON」画像（img/noimage.jpg）を表示。next があれば先にそちらを試す
+const NO_PHOTO=PHOTO_BASE+'noimage.jpg';
+function imgErr(next){
+  return next
+    ?`onerror="if(this.dataset.f){this.onerror=null;this.src='${NO_PHOTO}'}else{this.dataset.f=1;this.src='${esc(next)}'}"`
+    :`onerror="this.onerror=null;this.src='${NO_PHOTO}'"`;
+}
+function fixPhoto(c){ c.photo=photoUrl(c.name); c.photos=[c.photo]; c.photoIdx=0; delete c.gid; }
+
+
+function todayJST(){ const d=new Date(Date.now()+9*3600000); return d.toISOString().slice(0,10); }
+day=loadDay();
+function load(){
+  try{
+    const v=localStorage.getItem(STORE_KEY);
+    if(v){
+      casts=JSON.parse(v);
+      // 旧データ（girlid時代の初期サンプル id='c'+数字）を除き、写真を源氏名から作り直す
+      casts=casts.filter(c=>!/^c\d+$/.test(c.id)||!c.gid||c.id!=='c'+c.gid);
+      for(const c of casts) fixPhoto(c);
+      // 日付が変わっていたら完売状態をリセット
+      const savedDate=localStorage.getItem(SOLD_DATE_KEY)||'';
+      if(savedDate!==todayJST()) for(const c of casts) c.sold=false;
+      return;
+    }
+  }catch(e){}
+  casts=[];
+}
+function save(){ try{ localStorage.setItem(STORE_KEY,JSON.stringify(casts)); }catch(e){} }
+
+async function syncFromRemote(){
+  try{
+    const res=await fetch('./casts.json',{cache:'no-store'});
+    if(!res.ok) return;
+    const remote=await res.json();
+    if(!Array.isArray(remote)||remote.length===0) return;
+    const localMap=new Map(casts.map(c=>[c.id,c]));
+    const deletedIds=getDeletedIds();
+    let changed=false;
+    for(const rc of remote){
+      if(deletedIds.has(rc.id)) continue;
+      const local=localMap.get(rc.id);
+      // 源氏名で出勤を照合するので、名前もクラウド（casts.json）に合わせる
+      if(local){
+        const {shown,sold}=local;
+        if(local.name!==rc.name) changed=true;
+        Object.assign(local,rc,{shown,sold}); fixPhoto(local);
+      } else {
+        const c={...rc,shown:false,sold:false}; fixPhoto(c); casts.push(c);
+        changed=true;
+      }
+    }
+    save(); if(changed) render();
+  }catch(e){}
+}
+
+
+function tint(name){ let h=0; for(const ch of (name||'?')) h=(h*31+ch.charCodeAt(0))%360;
+  return `linear-gradient(150deg,hsl(${h} 42% 46%),hsl(${(h+28)%360} 46% 34%))`; }
+function find(id){ return casts.find(c=>c.id===id)||[...extraCasts.values()].find(c=>c.id===id); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+function render(){
+  stopTopSlides();
+  document.getElementById('mTop').classList.toggle('active',mode==='top');
+  document.getElementById('mCustomer').classList.toggle('active',mode==='customer');
+  document.getElementById('mInbound').classList.toggle('active',mode==='inbound');
+  document.getElementById('mSettings').classList.toggle('active',mode==='settings');
+  if(mode==='top') renderTop();
+  else if(mode==='customer') renderCustomer();
+  else if(mode==='inbound') renderInbound();
+  else renderSettings();
+}
+
+/* ===== トップ ===== */
+// top.jpg, top2.jpg, top3.jpg … を連番で探し、15秒ごとに4秒かけてクロスディゾルブで切り替える
+const TOP_HOLD_MS=15000;
+let topTimer=null, topImgs=null;
+function stopTopSlides(){ clearInterval(topTimer); topTimer=null; }
+async function loadTopImages(){
+  if(topImgs) return topImgs;
+  const all=[];
+  for(let i=1;i<=30;i++){
+    const u=PHOTO_BASE+(i===1?'top':'top'+i)+'.jpg';
+    if(!await new Promise(r=>probePhoto(u,r))) break;   // 番号が途切れたらそこまで
+    all.push(u);
+  }
+  // 利用表アプリで「非表示」にした番号（img/top.json の hidden）は飛ばす
+  let hidden=[];
+  try{ const r=await fetch(PHOTO_BASE+'top.json?t='+Date.now(),{cache:'no-store'}); if(r.ok) hidden=(await r.json()).hidden||[]; }catch(e){}
+  return topImgs=all.filter((u,i)=>!hidden.includes(i+1));
+}
+function renderTop(){
+  document.getElementById('main').innerHTML=`<div class="topShow"></div>`;
+  topIdx=0;
+  loadTopImages().then(list=>{
+    const box=document.querySelector('.topShow');
+    if(mode!=='top'||!box||box.children.length) return;
+    list.forEach((u,i)=>box.insertAdjacentHTML('beforeend',`<img class="topImg${i?'':' show'}" src="${esc(u)}" alt="">`));
+    if(list.length<2||topTimer) return;
+    // 左右スワイプで次／前の画像へ（すばやくフェード）
+    let sw=null;
+    box.addEventListener('pointerdown',e=>{ sw={x:e.clientX,y:e.clientY,id:e.pointerId}; });
+    box.addEventListener('pointerup',e=>{
+      if(!sw||e.pointerId!==sw.id) return;
+      const dx=e.clientX-sw.x, dy=e.clientY-sw.y; sw=null;
+      if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5) topGo(dx<0?1:-1,true);
+    });
+    box.addEventListener('pointercancel',()=>{ sw=null; });
+    startTopTimer();
+  });
+}
+let topIdx=0;
+function startTopTimer(){
+  clearInterval(topTimer);
+  topTimer=setInterval(()=>topGo(1,false),TOP_HOLD_MS);   // 手で動かした後も、そこから15秒後に再開
+}
+function topGo(step,quick){
+  const box=document.querySelector('.topShow');
+  if(!box||!box.isConnected){ stopTopSlides(); return; }
+  const imgs=box.querySelectorAll('.topImg'); if(imgs.length<2) return;
+  box.classList.toggle('quick',!!quick);
+  imgs[topIdx].classList.remove('show');
+  topIdx=(topIdx+step+imgs.length)%imgs.length;
+  imgs[topIdx].classList.add('show');
+  if(quick) startTopTimer();
+}
+
+/* ===== 表示（本日出勤） ===== */
+function onSheet(c){ return attendMap.has(c.name); }   // 利用表で本日出勤
+// インバウンド対応・条件は利用表アプリで管理（取得できない間は casts.json の値）
+let inboundMap=null;   // 源氏名 → 条件
+// 利用表アプリで「非表示」にしたキャストは、受付画面のどのパネルにも出さない
+let hiddenSet=new Set();
+// 名簿・マット対応も利用表アプリで管理（取得できない間は casts.json の値）
+let rosterSet=null, mattSet=null;
+function inRoster(c){ return !rosterSet||rosterSet.has(c.name); }
+function shown(c){ return !hiddenSet.has(c.name)&&inRoster(c); }
+function isMatt(c){ return mattSet?mattSet.has(c.name):!!c.matt; }
+// 利用表の名簿にいる全キャスト（受付画面に未登録の子は写真だけの仮キャスト）
+function rosterCasts(){
+  const byName=(a,b)=>(a.name||'').localeCompare((b.name||''),'ja');
+  if(!rosterSet) return [...casts].sort(byName);
+  const seen=new Set(), list=[];
+  for(const c of casts) if(rosterSet.has(c.name)&&!seen.has(c.name)){ seen.add(c.name); list.push(c); }
+  for(const n of rosterSet) if(!seen.has(n)){ seen.add(n); list.push(extraCast(n)); }
+  return list.sort(byName);
+}
+function isInbound(c){ return inboundMap?inboundMap.has(c.name):!!c.inbound; }
+function inbMemoOf(c){ return inboundMap?(inboundMap.get(c.name)||''):(c.inbMemo||''); }
+function inboundCasts(todayOnly){
+  const byName=(a,b)=>(a.name||'').localeCompare((b.name||''),'ja');
+  const registered=new Set(casts.map(c=>c.name));
+  const extras=inboundMap?[...inboundMap.keys()].filter(n=>!registered.has(n)).map(extraCast):[];
+  const all=[...casts,...extras].filter(c=>isInbound(c)&&shown(c));
+  return (todayOnly?all.filter(isAttending):all.filter(c=>!c.sold)).sort(byName);
+}
+function isAttending(c){ return onSheet(c); }
+// 利用表で本日利用なのに設定タブに未登録のキャストも、写真（img/源氏名.jpg）で自動表示する。
+// 完売状態はその日だけ day.extraSold に保存する
+const extraCasts=new Map();   // 源氏名 → 仮のキャスト
+function extraCast(name){
+  let c=extraCasts.get(name);
+  if(!c){ c={id:'sheet:'+name,name,photo:photoUrl(name),photos:[photoUrl(name)],photoIdx:0,extra:true}; extraCasts.set(name,c); }
+  c.sold=(day.extraSold||[]).includes(name);
+  return c;
+}
+function sheetOnlyCasts(){
+  const registered=new Set(casts.map(c=>c.name));
+  const list=[];
+  for(const name of attendMap.keys()){
+    if(registered.has(name)) continue;
+    list.push(extraCast(name));
+  }
+  return list;
+}
+function shiftLabel(c){
+  return attendMap.get(c.name)?.shiftTime||'';
+}
+function timeToMin(t){ const m=/(\d{1,2}):(\d{2})/.exec(t||''); return m?(+m[1])*60+(+m[2]):9999; }
+function todayList(){
+  const byName=(a,b)=>(a.name||'').localeCompare((b.name||''),'ja');   // あいうえお順（完売は下）
+  const base=[...casts.filter(isAttending),...sheetOnlyCasts()].filter(shown);
+  return [...base.filter(c=>!c.sold).sort(byName),...base.filter(c=>c.sold).sort(byName)];
+}
+function viewBarHTML(){
+  return `<div class="chBar">
+    <button class="chBtn ${viewMode==='today'?'active':''}" onclick="setViewMode('today')">本日利用</button>
+    <button class="chBtn ${viewMode==='matt'?'active':''}" onclick="setViewMode('matt')" style="margin-left:8px">マット対応</button>
+    <button id="chSyncBtn" class="chBtn" onclick="refreshAttendance(true)" style="margin-left:8px">更新</button>
+  </div>`;
+}
+function setViewMode(m){ viewMode=m; renderCustomer(); }
+function renderCustomer(){
+  if(viewMode==='matt'){ renderMattList(); return; }
+  const list=todayList();
+  let html=viewBarHTML();
+  if(list.length===0){
+    html+='<div class="empty" style="padding:24px 18px;">本日利用のキャストはいません。</div>';
+  }else{
+    html+='<div class="grid">';
+    for(const c of list) html+=todayCardHTML(c);
+    html+='</div>';
+  }
+  document.getElementById('main').innerHTML=html;
+  attachDnd();
+}
+function todayCardHTML(c){
+  const inner=c.photo
+    ?`<img class="photo" src="${esc(c.photo)}" alt="" ${imgErr()}>`
+    :`<div class="ph" style="background:${tint(c.name)}">${esc(c.name[0]||'')}</div>`;
+  const id=JSON.stringify(c.id);
+  const time=shiftLabel(c);
+  return `<div class="card ${c.sold?'sold':''}" data-id="${esc(c.id)}">${inner}
+    ${c.sold?'<div class="soldMark">受付終了</div>':''}
+    <div class="scrim"></div><div class="cname">${esc(c.name)}${time?`<span class="ctime">${esc(time)}</span>`:''}</div>
+    <button class="soldBtn ${c.sold?'active':''}" onclick='toggleSold(${id},event)'>${c.sold?'完売':'利用'}</button></div>`;
+}
+function toggleSold(id,e){
+  if(e) e.stopPropagation();
+  const c=find(id); if(!c) return;
+  checkNewDay();
+  c.sold=!c.sold;
+  if(c.extra){ setExtraSold(c.name,c.sold); } else save();
+  renderCustomer();
+}
+
+/* ===== インバウンド用 ===== */
+let inbMode='all'; // 'all' | 'today' | 'memo' | 'notice'
+let noticeLang='ja'; // 'ja' | 'en' | 'ko' | 'zh-tw' | 'zh-cn'
+const NOTICE_LANGS=[
+  {key:'ja', label:'日本語'},
+  {key:'en', label:'English'},
+  {key:'ko', label:'한국어'},
+  {key:'zh-tw', label:'繁體'},
+  {key:'zh-cn', label:'简体'},
+];
+const NOTICE_RED_FROM={ja:'基本的なサービスは次の通りです。',en:'Basic services include:',ko:'기본 서비스는 다음과 같습니다.','zh-tw':'基本服務內容如下：','zh-cn':'基本服务内容如下：'};
+const NOTICE_TEXT={
+  ja:`料金
+50分   ¥30,000
+75分   ¥45,000
+100分  ¥60,000
+ご利用時間によって料金がことなります。
+総額の料金がこちらになり追加のオプションなどはございませんのでこれ以上高くなることはございません。
+
+・18歳未満の方はご利用いただけません。
+・本番行為の要求・強要は法律により禁止されております。
+・女の子の撮影・暴力的な言動・女の子を傷つけるなどトラブルに繋がる行為は一切禁止です。
+・店外でのデートを誘う行為、携帯電話の番号・メールアドレス等の個人情報の交換は一切禁止です。
+・プレイ時間終了後に女の子の退出を拒む行為は禁止です。
+・性病の方もしくはその疑いのある方の入店はお断りします。
+・違法ドラッグまたは薬物乱用者の入店はお断りします。
+・シャワー・うがいの拒否はできません。
+・お客様所有のプレイ道具等の使用は禁止です。
+
+基本的なサービスは次の通りです。
+「キス・全身リップ・フ◯ラ・手コキ・ク◯ニ・シックスナイン・指入れ・素股」など手や口でのサービスとなります。
+本番行為,アナルは禁止のお店になります。`,
+
+  en:`Pricing
+50 min   ¥30,000
+75 min   ¥45,000
+100 min  ¥60,000
+Prices vary depending on the session length.
+The total price is as shown above. There are no additional options, so the cost will not exceed this amount.
+
+・Persons under 18 years of age are not permitted.
+・Demanding or coercing sexual intercourse is prohibited by law.
+・Photography of the girls, violent language or behavior, and any conduct that may cause harm or trouble is strictly prohibited.
+・Inviting girls to meet outside the store, and exchanging personal information such as phone numbers or email addresses is strictly prohibited.
+・Preventing the girl from leaving after the session time has ended is prohibited.
+・Entry is refused for persons with, or suspected of having, a sexually transmitted disease.
+・Entry is refused for persons using illegal drugs or substances.
+・Refusing to shower or gargle is not permitted.
+・The use of personal toys or tools brought by the customer is prohibited.
+
+Basic services include:
+Kiss, full-body licking, fellatio, handjob, cunnilingus, sixty-nine, fingering, and intercrural — all services provided by hand or mouth.
+Penetrative sex and anal services are not available at this establishment.`,
+
+  ko:`요금 안내
+50분   ¥30,000
+75분   ¥45,000
+100분  ¥60,000
+이용 시간에 따라 요금이 다릅니다.
+위 금액이 총 요금이며, 추가 옵션이 없으므로 이 이상 비용이 발생하지 않습니다.
+
+・만 18세 미만은 이용하실 수 없습니다.
+・성행위 요구 및 강요는 법률로 금지되어 있습니다.
+・여성 촬영, 폭력적인 언행, 여성에게 상처를 주는 등 문제가 될 수 있는 행위는 일절 금지입니다.
+・가게 밖에서의 만남을 유도하거나, 전화번호·이메일 등 개인정보 교환은 일절 금지입니다.
+・이용 시간 종료 후 여성의 퇴실을 거부하는 행위는 금지입니다.
+・성병 보유자 또는 의심되는 분의 입장은 거절합니다.
+・불법 약물 사용자 또는 약물 남용자의 입장은 거절합니다.
+・샤워 및 가글은 거부하실 수 없습니다.
+・고객이 지참하신 플레이 도구 등의 사용은 금지입니다.
+
+기본 서비스는 다음과 같습니다.
+키스, 전신 리프, 구강 서비스, 수음, 쿤닐링구스, 69, 손가락 삽입, 소마타 등 손과 입을 이용한 서비스입니다.
+성교 및 항문 서비스는 제공하지 않습니다.`,
+
+  'zh-tw':`收費標準
+50分鐘   ¥30,000
+75分鐘   ¥45,000
+100分鐘  ¥60,000
+費用依使用時間而異。
+以上為總費用，無任何附加選項，不會產生額外費用。
+
+・未滿18歲者不得使用本服務。
+・要求或強迫進行性行為，依法嚴格禁止。
+・禁止對女孩拍照、使用暴力言行及傷害女孩等一切可能引發糾紛的行為。
+・禁止邀約女孩在店外會面，以及交換電話號碼、電子郵件等個人資訊。
+・遊玩時間結束後，禁止阻止女孩離開。
+・患有性病或疑似性病者，謝絕入場。
+・非法藥物使用者或藥物濫用者，謝絕入場。
+・不得拒絕淋浴及漱口。
+・禁止使用客人自備的玩具或道具。
+
+基本服務內容如下：
+接吻、全身親吻、口交、手淫、舔陰、69式、手指插入、素股等以手和口提供的服務。
+本店禁止性交及肛交服務。`,
+
+  'zh-cn':`收费标准
+50分钟   ¥30,000
+75分钟   ¥45,000
+100分钟  ¥60,000
+费用因使用时间而异。
+以上为总费用，无任何附加选项，不会产生额外费用。
+
+・未满18岁者不得使用本服务。
+・要求或强迫进行性行为，依法严格禁止。
+・禁止对女孩拍照、使用暴力言行及伤害女孩等一切可能引发纠纷的行为。
+・禁止邀约女孩在店外会面，以及交换手机号码、电子邮件等个人信息。
+・游玩时间结束后，禁止阻止女孩离开。
+・患有性病或疑似性病者，谢绝入场。
+・非法药物使用者或药物滥用者，谢绝入场。
+・不得拒绝淋浴及漱口。
+・禁止使用客人自备的玩具或道具。
+
+基本服务内容如下：
+接吻、全身亲吻、口交、手淫、舔阴、69式、手指插入、素股等以手和口提供的服务。
+本店禁止性交及肛交服务。`,
+};
+function renderInbound(){
+  const list=inboundCasts(inbMode==='today');
+  let html=`<div class="chBar">
+    <button class="chBtn ${inbMode==='today'?'active':''}" onclick="setInbMode('today')">本日利用</button>
+    <button class="chBtn ${inbMode==='all'?'active':''}" onclick="setInbMode('all')" style="margin-left:8px">全員表示</button>
+    <button class="chBtn ${inbMode==='memo'?'active':''}" onclick="setInbMode('memo')" style="margin-left:8px">条件</button>
+    <button class="chBtn ${inbMode==='notice'?'active':''}" onclick="setInbMode('notice')" style="margin-left:8px">注意事項</button>
+  </div>`;
+  if(inbMode==='notice'){
+    html+=`<div style="display:flex;gap:8px;padding:10px 14px 0;">
+      ${NOTICE_LANGS.map(l=>`<button class="chBtn ${noticeLang===l.key?'active':''}" onclick="setNoticeLang('${l.key}')">${l.label}</button>`).join('')}
+    </div>`;
+    // 「基本的なサービス」以降は赤文字
+    const text=NOTICE_TEXT[noticeLang]||'', from=text.indexOf(NOTICE_RED_FROM[noticeLang]||'\u0000');
+    const body=from<0?esc(text):esc(text.slice(0,from))+`<span style="color:var(--danger);">${esc(text.slice(from))}</span>`;
+    // 英語は文が長いので、スクロールせずに収まるよう少し小さく詰める
+    const fs=noticeLang==='en'?'font-size:13px;line-height:1.65;':'font-size:15px;line-height:2;';
+    html+=`<div style="padding:20px 20px;${fs}white-space:pre-wrap;color:var(--ink);">${body}</div>`;
+    document.getElementById('main').innerHTML=html;
+    return;
+  }
+  if(inbMode==='memo'){
+    html+=`<div style="display:grid;grid-template-columns:1fr 1fr;padding:6px 10px;height:calc(100% - 50px);align-content:start;">`;
+    for(const c of list){
+      html+=`<div style="display:flex;flex-direction:column;justify-content:center;padding:7px 10px;border-bottom:1px solid var(--line);">
+        <div style="font-size:14px;font-weight:700;color:var(--ink);">${esc(c.name||'')}</div>
+        <div style="font-size:12px;color:${inbMemoOf(c)?'var(--gray)':'var(--line)'};margin-top:1px;">${inbMemoOf(c)?esc(inbMemoOf(c)):'—'}</div>
+      </div>`;
+    }
+    html+='</div>';
+  } else {
+    html+='<div class="grid">';
+    for(const c of list) html+=inbCardHTML(c);
+    html+='</div>';
+  }
+  document.getElementById('main').innerHTML=html;
+}
+function setInbMode(m){ inbMode=m; renderInbound(); }
+function setNoticeLang(lang){ noticeLang=lang; renderInbound(); }
+function inbCardHTML(c){
+  const inbSrc=photoUrl(c.name,'A1');
+  const inner=inbSrc
+    ?`<img class="photo" src="${esc(inbSrc)}" alt="" ${imgErr(c.photo)}>`
+    :(c.photo?`<img class="photo" src="${esc(c.photo)}" alt="">`
+      :`<div class="ph" style="background:${tint(c.name)}">${esc(c.name[0]||'')}</div>`);
+  return `<div class="card" onclick="showInbPhoto('${esc(c.id)}')">${inner}</div>`;
+}
+function showInbPhoto(id){
+  const c=find(id); if(!c) return;
+  viewerInbound=true; viewerCastId=id;
+  viewerList=inboundCasts(inbMode==='today');
+  renderViewerPhoto(c,0);
+  document.getElementById('viewer').classList.add('show');
+}
+
+function renderMattList(){
+  const list=todayList().filter(isMatt);
+  let html=viewBarHTML();
+  if(list.length===0){
+    html+='<div class="empty" style="padding:24px 18px;">本日利用のマット対応キャストはいません。</div>';
+  }else{
+    html+='<div class="grid">';
+    for(const c of list) html+=todayCardHTML(c);
+    html+='</div>';
+  }
+  document.getElementById('main').innerHTML=html;
+  attachDnd();
+}
+
+/* ===== 出勤データ（attend.json） ===== */
+// 日付が変わったら完売・手動出勤をリセット
+function setExtraSold(name,sold){
+  const set=new Set(day.extraSold||[]);
+  if(sold) set.add(name); else set.delete(name);
+  day.extraSold=[...set]; saveDay();
+}
+function checkNewDay(){
+  const t=todayJST();
+  if(localStorage.getItem(SOLD_DATE_KEY)!==t){
+    for(const c of casts) c.sold=false;
+    localStorage.setItem(SOLD_DATE_KEY,t); save();
+  }
+  if(day.date!==t){ day={date:t,autoSold:[],extraSold:[]}; saveDay(); }
+}
+// 退勤時間を過ぎたキャストを完売にする（各キャスト1日1回だけ。手動で戻した完売は上書きしない）
+function applyAutoSold(){
+  const nowJST=new Date(Date.now()+9*3600000);
+  const nowMin=nowJST.getUTCHours()*60+nowJST.getUTCMinutes();
+  const done=new Set(day.autoSold);
+  let changed=false;
+  for(const c of [...casts,...sheetOnlyCasts()]){
+    const info=attendMap.get(c.name);
+    if(!info||done.has(c.name)) continue;
+    const end=timeToMin(info.end);   // 24:00（ラスト）は営業終了まで完売にしない
+    if(end!==9999&&nowMin>end){
+      c.sold=true; done.add(c.name); changed=true;
+      if(c.extra) setExtraSold(c.name,true);
+    }
+  }
+  if(changed){ day.autoSold=[...done]; saveDay(); save(); }
+}
+/* 利用表（ロイヤル利用管理）から直接取得。URL・パスワードはこの端末の localStorage のみに保存 */
+const SHEET_URL_KEY='rr_sheet_url', SHEET_PASS_KEY='rr_sheet_pass';
+function sheetConf(){ try{ return {url:localStorage.getItem(SHEET_URL_KEY)||'',pass:localStorage.getItem(SHEET_PASS_KEY)||''}; }catch(e){ return {url:'',pass:''}; } }
+// '20.5' → '20:30'、L（ラスト）→ '24:00'（scripts/fetch_attendance.py と同じ）
+function fmtSheetTime(v){
+  const s=String(v??'').trim();
+  if(s==='L'||s==='24'||s==='24:00') return '24:00';
+  const f=parseFloat(s); if(isNaN(f)) return s;
+  const h=Math.floor(f); return h+':'+String(Math.round((f-h)*60)).padStart(2,'0');
+}
+async function fetchSheetAttendance(){
+  const {url,pass}=sheetConf();
+  const res=await fetch(url+(url.includes('?')?'&':'?')+'action=get&rev=0&pass='+encodeURIComponent(pass)+'&_t='+Date.now(),{cache:'no-store'});
+  let j; try{ j=await res.json(); }catch(e){ throw new Error('URLが正しくない可能性があります'); }
+  if(!j.ok) throw new Error(j.error||'利用表の取得に失敗');
+  const d=typeof j.data==='string'?JSON.parse(j.data):j.data;
+  const today=todayJST();
+  const names=new Map((d.casts||[]).map(c=>[c.id,(c.name||'').trim()]));
+  const list=[];
+  for(const [k,r] of Object.entries(d.records||{})){
+    if(!k.endsWith('_'+today)||!r||r._deleted) continue;
+    if((r.status!=='work'&&r.status!=='furikae')||!r.start) continue;   // 利用・振替のみ
+    if(r.hideNet||r.dummy) continue;                                      // ネット非掲載・ダミーは除外
+    const name=names.get(k.slice(0,-today.length-1)); if(!name) continue;
+    const st=fmtSheetTime(r.start), en=fmtSheetTime((r.start2?r.end2:r.end)||'L');   // 中抜けは最初〜最後
+    list.push({name,start:st,end:en,shiftTime:st+'〜'+en});
+  }
+  // インバウンド対応（利用表アプリで一度も設定していない間は null → casts.json を使う）
+  const cs=d.casts||[];
+  const inbound=cs.some(c=>c.inbound!==undefined)
+    ?Object.fromEntries(cs.filter(c=>c.inbound).map(c=>[(c.name||'').trim(),c.inbMemo||''])):null;
+  const hidden=cs.filter(c=>c.hidePanel).map(c=>(c.name||'').trim());
+  const roster=cs.map(c=>(c.name||'').trim()).filter(Boolean);
+  const matt=cs.filter(c=>c.mat).map(c=>(c.name||'').trim());
+  return {date:today,list,inbound,hidden,roster,matt};
+}
+async function refreshAttendance(manual){
+  const btn=document.getElementById('chSyncBtn');
+  if(manual&&btn){ btn.disabled=true; btn.textContent='取得中...'; }
+  checkNewDay();
+  if(manual) await syncFromRemote();
+  try{
+    let data=null, sheetErr='';
+    const conf=sheetConf();
+    if(conf.url&&conf.pass){
+      try{ data=await fetchSheetAttendance(); }
+      catch(e){ sheetErr=String(e&&e.message||e); console.warn('利用表から取得できず attend.json を使用',e); }
+    }
+    if(!data){
+      const res=await fetch('./attend.json?t='+Date.now(),{cache:'no-store'});
+      if(!res.ok) throw new Error();
+      data=await res.json();
+    }
+    const isToday=data.date===todayJST();
+    attendMap=new Map(isToday?(data.list||[]).map(x=>[x.name,x]):[]);
+    if(data.inbound) inboundMap=new Map(Object.entries(data.inbound));
+    if(data.hidden) hiddenSet=new Set(data.hidden);
+    if(data.roster&&data.roster.length) rosterSet=new Set(data.roster);
+    if(data.matt) mattSet=new Set(data.matt);
+    applyAutoSold();
+    if(manual){
+      const n=casts.filter(isAttending).length;
+      if(sheetErr==='auth') alert('利用表のパスワードが違います。\n設定タブの「利用表の接続」を確認してください。');
+      else if(sheetErr) alert('利用表から取得できませんでした（'+sheetErr+'）。\n設定タブの「利用表の接続」のURLとネット接続を確認してください。');
+      else if(!(conf.url&&conf.pass)&&!isToday) alert('本日分の利用データがまだありません。\n設定タブの「利用表の接続」にURLとパスワードを入れると、更新ボタンで利用表から直接取得できます。');
+      else showSyncToast(`利用情報を更新しました（${n}名${conf.url&&conf.pass?'・利用表から取得':''}）`);
+    }
+  }catch(e){
+    if(manual) alert('利用データの取得に失敗しました。\nネットワーク接続を確認してください。');
+  }
+  if(manual&&btn){ btn.disabled=false; btn.textContent='更新'; }
+  if(mode==='customer'||mode==='inbound') render();
+}
+
+/* ===== 設定（あいうえお順・6列） ===== */
+function saveSheetConf(){
+  const url=document.getElementById('sheetUrl').value.trim();
+  const pass=document.getElementById('sheetPass').value.trim();
+  try{ localStorage.setItem(SHEET_URL_KEY,url); localStorage.setItem(SHEET_PASS_KEY,pass); }catch(e){}
+  showSyncToast(url&&pass?'✓ 利用表の接続を保存しました':'利用表の接続を解除しました');
+  if(url&&pass) refreshAttendance(true);
+}
+function renderSettings(){
+  // キャストの追加・編集は利用表アプリで行うので、ここは見るだけの一覧
+  const list=rosterCasts();
+  let html='<div class="setWrap">'
+    +`<div class="setHead"><h2>キャスト一覧 <span style="font-size:13px;font-weight:500;color:var(--gray);margin-left:8px">${list.length}名</span></h2></div>`;
+  if(list.length===0){
+    html+='<div class="empty">キャストがいません。</div>';
+  }else{
+    html+='<div class="setGrid">';
+    for(const c of list){
+      const inner=c.photo
+        ?`<img src="${esc(c.photo)}" alt="" ${imgErr()}>`
+        :`<div class="ph" style="background:${tint(c.name)}">${esc(c.name[0]||'')}</div>`;
+      html+=`<div class="scard" onclick='showPhoto(${JSON.stringify(c.id)})'>
+        <div class="sthumb">${inner}${hiddenSet.has(c.name)?'<div class="soldtag" style="background:var(--gray)">非表示</div>':''}</div>
+        <div class="sname">${esc(c.name)}</div></div>`;
+    }
+    html+='</div>';
+  }
+  const sc=sheetConf();
+  html+=`<div class="setHead" style="margin-top:28px"><h2>利用表の接続</h2></div>
+    <p style="margin:0 0 10px;font-size:12px;color:var(--gray);">設定すると「更新」ボタンで利用表から本日利用を直接取得します（この端末にだけ保存）。</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:760px;">
+      <input id="sheetUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(sc.url)}" autocomplete="off"
+        style="flex:2;min-width:240px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;">
+      <input id="sheetPass" type="password" placeholder="パスワード" value="${esc(sc.pass)}" autocomplete="off"
+        style="flex:1;min-width:120px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;">
+      <button class="btn sm" onclick="saveSheetConf()">保存</button>
+    </div>`;
+  html+='</div>';
+  document.getElementById('main').innerHTML=html;
+}
+
+function setMode(m){ mode=m; closeViewer(); render(); }
+
+/* 写真切り替え */
+function switchPhoto(id, idx){
+  const c=find(id); if(!c)return;
+  c.photoIdx=idx; c.photo=(c.photos||[])[idx]||'';
+  save(); renderSettings();
+}
+
+
+/* 追加・編集 */
+function openPhotoViewer(){
+  const c=find(editId); if(!c)return;
+  previewMode=true; viewerCastId=c.id; viewerList=[];
+  renderViewerPhoto(c,0);
+  document.getElementById('viewer').classList.add('show');
+}
+function updateEditPhoto(){
+  const name=document.getElementById('fName').value.trim();
+  const wrap=document.getElementById('editPhotoWrap');
+  const img=document.getElementById('editPhoto');
+  if(name){ wrap.style.display='block'; img.src=photoUrl(name); }
+  else { wrap.style.display='none'; img.src=''; }
+}
+function toggleFMatt(){
+  const checked=document.getElementById('fMatt').checked;
+  document.getElementById('mattMemoWrap').style.display=checked?'block':'none';
+  if(!checked) document.getElementById('fMattMemo').value='';
+}
+function openAdd(){ editId=null;
+  document.getElementById('editTitle').textContent='キャストを追加';
+  document.getElementById('fName').value='';
+  document.getElementById('editDel').style.display='none';
+  document.getElementById('nameErr').style.display='none';
+  document.getElementById('editPhotoWrap').style.display='none';
+  document.getElementById('fInbInfo').textContent='利用表アプリのキャスト編集で設定します';
+  document.getElementById('fMatt').checked=false;
+  document.getElementById('mattMemoWrap').style.display='none';
+  document.getElementById('fMattMemo').value='';
+  document.getElementById('editModal').classList.add('show');
+  setTimeout(()=>document.getElementById('fName').focus(),50); }
+function openEdit(id){ const c=find(id); if(!c)return; editId=id;
+  document.getElementById('editTitle').textContent='キャストを編集';
+  document.getElementById('fName').value=c.name;
+  document.getElementById('editDel').style.display='block';
+  document.getElementById('nameErr').style.display='none';
+  document.getElementById('fInbInfo').textContent=(isInbound(c)?'対応する'+(inbMemoOf(c)?'（'+inbMemoOf(c)+'）':''):'対応しない')+' ・ 利用表アプリで変更';
+  document.getElementById('fMatt').checked=!!c.matt;
+  document.getElementById('mattMemoWrap').style.display=c.matt?'block':'none';
+  document.getElementById('fMattMemo').value=c.mattMemo||'';
+  document.getElementById('editModal').classList.add('show');
+  updateEditPhoto(); }
+function saveCast(){
+  const name=document.getElementById('fName').value.trim();
+  if(!name){ document.getElementById('nameErr').style.display='block'; return; }
+  const photo=photoUrl(name);
+  const photos=[photo];
+  const old=editId?find(editId):null;   // インバウンドは利用表アプリで管理するので、ここでは変えない
+  const inbound=!!(old&&old.inbound), inbMemo=(old&&old.inbMemo)||'';
+  const matt=document.getElementById('fMatt').checked;
+  const mattMemo=matt?document.getElementById('fMattMemo').value.trim():'';
+  if(editId){
+    const c=find(editId);
+    c.name=name; c.photos=photos; c.photo=photo; c.photoIdx=0; c.inbound=inbound; c.inbMemo=inbMemo; c.matt=matt; c.mattMemo=mattMemo;
+  } else{
+    casts.push({id:'c'+Date.now(),name,photo,photos,photoIdx:0,sold:false,shown:false,inbound,inbMemo,matt,mattMemo});
+  }
+  closeEdit(); save(); render(); autoSyncToGitHub(); }
+function deleteCast(){ if(!editId)return; const c=find(editId);
+  document.getElementById('confirmName').textContent=(c?c.name:'')+' を完全に削除します。元に戻せません。';
+  document.getElementById('confirmModal').classList.add('show'); }
+function reallyDelete(){ if(!editId){ closeConfirm(); return; }
+  addDeletedId(editId);
+  casts=casts.filter(c=>c.id!==editId);
+  closeConfirm(); closeEdit(); save(); render(); autoSyncToGitHub(); }
+function closeConfirm(){ document.getElementById('confirmModal').classList.remove('show'); }
+function closeEdit(){ document.getElementById('editModal').classList.remove('show'); editId=null; }
+
+async function doChangePassword(){
+  const cur=document.getElementById('curPass').value;
+  const next=document.getElementById('newPass').value;
+  const msg=document.getElementById('passMsg');
+  const err=await changePassword(cur,next);
+  if(err){ msg.style.color='var(--danger)'; msg.textContent=err; }
+  else {
+    msg.style.color='#1F8A5B'; msg.textContent='変更しました';
+    document.getElementById('curPass').value='';
+    document.getElementById('newPass').value='';
+  }
+  setTimeout(()=>msg.textContent='',3000);
+}
+
+const GH_TOKEN_KEY='rr_gh_token';
+let syncToastTimer=null;
+function showSyncToast(msg){
+  const el=document.getElementById('syncToast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(syncToastTimer);
+  syncToastTimer=setTimeout(()=>el.classList.remove('show'),2500);
+}
+async function autoSyncToGitHub(){
+  const token=localStorage.getItem(GH_TOKEN_KEY);
+  if(!token) return;
+  const REPO='royallips/macherie-reception';
+  const FILE='casts.json';
+  try{
+    const meta=await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`,
+      {headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}});
+    if(!meta.ok) throw new Error(meta.status);
+    const {sha}=await meta.json();
+    const data=casts.map(({id,name,photo,photos,photoIdx,inbound,inbMemo,matt,mattMemo})=>
+      ({id,name,photo,photos,photoIdx,inbound,inbMemo,matt,mattMemo}));
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
+    const res=await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`,{
+      method:'PUT',
+      headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
+      body:JSON.stringify({message:'キャスト情報を更新',content,sha})
+    });
+    if(!res.ok) throw new Error(res.status);
+    showSyncToast('☁ 他の端末に同期しました');
+  }catch(e){
+    if(String(e.message).includes('401')||String(e.message).includes('403'))
+      localStorage.removeItem(GH_TOKEN_KEY);
+    showSyncToast('同期に失敗しました');
+  }
+}
+function saveGHToken(){
+  const val=document.getElementById('ghTokenInput').value.trim();
+  if(val){
+    localStorage.setItem(GH_TOKEN_KEY,val);
+    showSyncToast('✓ トークンを保存しました');
+  } else {
+    localStorage.removeItem(GH_TOKEN_KEY);
+    showSyncToast('トークンを削除しました');
+  }
+  renderSettings();
+}
+async function pushCastsToGitHub(){
+  let token=localStorage.getItem(GH_TOKEN_KEY)||'';
+  if(!token){
+    token=prompt('GitHubトークンを入力してください（ghp_で始まるもの）:');
+    if(!token) return;
+    localStorage.setItem(GH_TOKEN_KEY,token);
+  }
+  const REPO='royallips/macherie-reception';
+  const FILE='casts.json';
+  try{
+    // 現在のSHAを取得
+    const meta=await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`,
+      {headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}});
+    if(!meta.ok) throw new Error('トークンまたはリポジトリのエラー: '+meta.status);
+    const {sha}=await meta.json();
+    // 保存するデータ（name/inbound含む全フィールド、sold/shownは除外）
+    const data=casts.map(({id,name,photo,photos,photoIdx,inbound,inbMemo,matt,mattMemo})=>
+      ({id,name,photo,photos,photoIdx,inbound,inbMemo,matt,mattMemo}));
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
+    const res=await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`,{
+      method:'PUT',
+      headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
+      body:JSON.stringify({message:'キャスト情報を更新',content,sha})
+    });
+    if(!res.ok) throw new Error('保存エラー: '+res.status);
+    alert('GitHubに保存しました。新しい端末でも正しく表示されるようになります。');
+  }catch(e){
+    if(e.message.includes('401')||e.message.includes('403')){
+      localStorage.removeItem(GH_TOKEN_KEY);
+      alert('トークンが無効です。もう一度お試しください。');
+    } else {
+      alert('エラーが発生しました: '+e.message);
+    }
+  }
+}
+
+/* ===== 全画面ビューア ===== */
+let viewerCastId=null, viewerList=[], vs=null, previewMode=false, viewerInbound=false;
+function showPhoto(id){
+  const c=find(id); if(!c)return;
+  viewerCastId=id;
+  viewerList=mode==='settings' ? rosterCasts()
+    : mode!=='customer' ? []
+    : todayList().filter(c=>viewMode!=='matt'||isMatt(c));
+  renderViewerPhoto(c,0);
+  document.getElementById('viewer').classList.add('show');
+}
+function viewerPD(e){
+  if(e.target.closest('button')) return;
+  vs={x0:e.clientX, y0:e.clientY, pid:e.pointerId};
+}
+function viewerPU(e){
+  if(!vs || e.pointerId!==vs.pid) return;
+  const dx=e.clientX-vs.x0, dy=e.clientY-vs.y0; vs=null;
+  if(Math.abs(dx)<12 && Math.abs(dy)<12){ closeViewer(); return; }
+  if(Math.abs(dx)>Math.abs(dy)*1.5 && Math.abs(dx)>50 && viewerList.length>1){
+    const i=viewerList.findIndex(c=>c.id===viewerCastId);
+    const next=dx<0 ? viewerList[i+1] : viewerList[i-1];
+    if(next){
+      const body=document.getElementById('viewerBody');
+      body.classList.add('fade');
+      setTimeout(()=>{ viewerCastId=next.id; renderViewerPhoto(next,0); body.classList.remove('fade'); },150);
+    }
+  }
+}
+// 写真があるか確認（結果は覚えておく）
+const photoExists={};
+function probePhoto(url,cb){
+  if(photoExists[url]!==undefined){ cb(photoExists[url]); return; }
+  const im=new Image();
+  im.onload=()=>{ photoExists[url]=true; cb(true); };
+  im.onerror=()=>{ photoExists[url]=false; cb(false); };
+  im.src=url;
+}
+let viewerTok=0;
+function renderViewerPhoto(c,idx){
+  const body=document.getElementById('viewerBody');
+  const sw=document.getElementById('vSwitch');
+  sw.style.display='none'; sw.innerHTML='';
+  // 通常：源氏名 / 源氏名2 / 源氏名3、インバウンド：源氏名A1 / 源氏名A2（A1がなければ通常の写真）
+  const urls=viewerInbound
+    ? [photoUrl(c.name,'A1'),photoUrl(c.name,'A2')]
+    : [c.photo||'',photoUrl(c.name,'2'),photoUrl(c.name,'3')];
+  const url=urls[idx]||urls[0];
+  const onerr=idx>0?'onerror="switchViewerPhoto(0)"'
+    :viewerInbound?imgErr(c.photo):imgErr();
+  const tok=++viewerTok, avail=[true];
+  const draw=()=>{
+    if(tok!==viewerTok||avail.filter(Boolean).length<2) return;
+    sw.innerHTML=urls.map((u,i)=>avail[i]
+      ?`<button class="${idx===i?'active':''}" onclick="event.stopPropagation();switchViewerPhoto(${i})">${'①②③'[i]}</button>`:'').join('');
+    sw.style.display='flex';
+  };
+  urls.slice(1).forEach((u,k)=>{ if(u) probePhoto(u,ok=>{ avail[k+1]=ok; draw(); }); });
+  const media=url?`<img src="${esc(url)}" alt="" ${onerr}>`
+    :`<div class="vph" style="background:${tint(c.name)}"><div class="big">${esc(c.name[0]||'')}</div></div>`;
+  const showName=false;   // 拡大表示では名前を出さない（写真に名前が入っているため）
+  body.innerHTML=media+(showName?`<div class="vname">${esc(c.name)}</div>`:'');
+}
+function switchViewerPhoto(idx){
+  const c=find(viewerCastId); if(!c)return;
+  renderViewerPhoto(c,idx);
+}
+function closeViewer(e){ if(e)e.stopPropagation(); previewMode=false; viewerInbound=false; document.getElementById('viewer').classList.remove('show'); }
+
+/* ===== カードのタップ ===== */
+let g=null;
+const MOVE_CANCEL=20;
+
+function attachDnd(){
+  document.querySelectorAll('.card[data-id]').forEach(card=>{
+    const id=card.getAttribute('data-id');
+    card.addEventListener('pointerdown', e=>{
+      if(e.pointerType==='mouse' && e.button!==0) return;
+      if(e.target.closest('button')) return;
+      gestureStart(e, id);
+    }, {passive:true});
+  });
+}
+function gestureStart(e, id){
+  g={id, x0:e.clientX, y0:e.clientY, pid:e.pointerId};
+}
+function gestureMove(e){
+  if(!g || e.pointerId!==g.pid) return;
+  if(Math.hypot(e.clientX-g.x0, e.clientY-g.y0)>MOVE_CANCEL) g=null;
+}
+function gestureEnd(e){
+  if(!g || e.pointerId!==g.pid) return;
+  const moved=Math.hypot(e.clientX-g.x0, e.clientY-g.y0)>10;
+  const id=g.id; g=null;
+  if(moved) return;
+  showPhoto(id);
+}
+document.addEventListener('pointermove', gestureMove, {passive:false});
+document.addEventListener('pointerup', gestureEnd);
+document.addEventListener('pointercancel', e=>{ if(g && e.pointerId===g.pid) g=null; });
+
+/* ===== ロック画面 ===== */
+const AUTH_KEY='rr_auth_v2';
+const PASS_KEY='rr_pass_v2';
+const DEFAULT_PASS='royallips';
+
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function initLock(){
+  // ロゴをlock画面にコピー
+  const logo=document.querySelector('.logoImg');
+  if(logo) document.getElementById('lockLogoImg').src=logo.src;
+  // 保存済みパスハッシュがなければデフォルトを設定
+  if(!localStorage.getItem(PASS_KEY)){
+    localStorage.setItem(PASS_KEY,await sha256(DEFAULT_PASS));
+  }
+  // 認証済みチェック
+  if(localStorage.getItem(AUTH_KEY)==='1'){
+    document.getElementById('lockScreen').classList.add('hidden');
+    return;
+  }
+  // ロック画面表示・アプリ側は非表示
+  document.getElementById('lockInput').focus();
+}
+async function tryUnlock(){
+  const input=document.getElementById('lockInput').value;
+  if(!input) return;
+  const hash=await sha256(input);
+  const stored=localStorage.getItem(PASS_KEY)||await sha256(DEFAULT_PASS);
+  if(hash===stored){
+    localStorage.setItem(AUTH_KEY,'1');
+    const ls=document.getElementById('lockScreen');
+    ls.style.opacity='0';ls.style.transition='opacity .3s';
+    setTimeout(()=>ls.classList.add('hidden'),300);
+  } else {
+    const err=document.getElementById('lockErr');
+    err.textContent='パスワードが違います';
+    document.getElementById('lockInput').value='';
+    setTimeout(()=>err.textContent='',2000);
+  }
+}
+async function changePassword(current,next){
+  const curHash=await sha256(current);
+  const stored=localStorage.getItem(PASS_KEY)||await sha256(DEFAULT_PASS);
+  if(curHash!==stored) return '現在のパスワードが違います';
+  if(next.length<4) return 'パスワードは4文字以上にしてください';
+  const newHash=await sha256(next);
+  localStorage.setItem(PASS_KEY,newHash);
+  // 他の端末にも反映するためGitHubにpush
+  await pushPassToGitHub(newHash);
+  return null;
+}
+async function pushPassToGitHub(hash){
+  const token=localStorage.getItem(GH_TOKEN_KEY)||'';
+  if(!token) return;
+  const REPO='royallips/macherie-reception';
+  const FILE='app-config.json';
+  try{
+    let sha='';
+    const meta=await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`,
+      {headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}});
+    if(meta.ok){const j=await meta.json();sha=j.sha;}
+    const content=btoa(JSON.stringify({passHash:hash}));
+    const body={message:'パスワード更新',content};
+    if(sha) body.sha=sha;
+    await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`,{
+      method:'PUT',
+      headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+  }catch(e){}
+}
+async function syncPassFromRemote(){
+  try{
+    const res=await fetch('./app-config.json?t='+Date.now(),{cache:'no-store'});
+    if(!res.ok) return;
+    const cfg=await res.json();
+    if(cfg.passHash) localStorage.setItem(PASS_KEY,cfg.passHash);
+  }catch(e){}
+}
+
+function toggleFullscreen(){
+  const d=document, el=d.documentElement;
+  const isFs=d.fullscreenElement||d.webkitFullscreenElement;
+  if(isFs){ (d.exitFullscreen||d.webkitExitFullscreen).call(d); }
+  else { const req=el.requestFullscreen||el.webkitRequestFullscreen; if(req) req.call(el).catch?.(()=>{}); }
+}
+function updateFsBtn(){
+  const b=document.getElementById('fsBtn'); if(!b) return;
+  const isFs=document.fullscreenElement||document.webkitFullscreenElement;
+  b.textContent=isFs?'✕':'⛶'; b.title=isFs?'全画面を終了':'全画面表示';
+}
+document.addEventListener('fullscreenchange',updateFsBtn);
+document.addEventListener('webkitfullscreenchange',updateFsBtn);
+
+load(); syncPassFromRemote(); initLock().then(()=>{ render(); syncFromRemote(); refreshAttendance(false); });
+// 毎日午前7時（日本時間）に1回だけ本日出勤・キャスト情報を取り直す（全画面表示を保つためページの再読み込みはしない）
+function scheduleDailyRefresh(){
+  const nowJST=Date.now()+9*3600000;
+  let next=Math.floor(nowJST/86400000)*86400000+7*3600000;   // 今日の7:00（JST）
+  if(next<=nowJST) next+=86400000;
+  setTimeout(async()=>{
+    checkNewDay(); topImgs=null; await syncFromRemote(); await refreshAttendance(false);
+    scheduleDailyRefresh();
+  },next-nowJST);
+}
+scheduleDailyRefresh();
+</script>
+</body>
+</html>
