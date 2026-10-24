@@ -137,7 +137,7 @@ def main():
     out['roster'] = [c.get('name', '').strip() for c in casts if c.get('name', '').strip()]
     out['matt'] = [c.get('name', '').strip() for c in casts if c.get('mat')]
     if any('inbound' in c for c in casts):
-        out['inbound'] = {c.get('name', '').strip(): c.get('inbMemo', '') or ''
+        out['inbound'] = {c.get('name', '').strip(): (c.get('inbMemo') or c.get('inboundCond') or '')
                           for c in casts if c.get('inbound')}
     with open(OUT, 'w', encoding='utf-8') as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
