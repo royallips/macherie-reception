@@ -826,7 +826,7 @@ async function fetchSheetAttendance(){
   // インバウンド対応（利用表アプリで一度も設定していない間は null → casts.json を使う）
   const cs=d.casts||[];
   const inbound=cs.some(c=>c.inbound!==undefined)
-    ?Object.fromEntries(cs.filter(c=>c.inbound).map(c=>[(c.name||'').trim(),c.inbMemo||''])):null;
+    ?Object.fromEntries(cs.filter(c=>c.inbound).map(c=>[(c.name||'').trim(),c.inbMemo||c.inboundCond||''])):null;
   const hidden=cs.filter(c=>c.hidePanel).map(c=>(c.name||'').trim());
   const roster=cs.map(c=>(c.name||'').trim()).filter(Boolean);
   const matt=cs.filter(c=>c.mat).map(c=>(c.name||'').trim());
